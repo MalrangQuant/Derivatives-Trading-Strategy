@@ -28,7 +28,9 @@ class delta_hedging:
             self.dt = self.T / 52                   
         elif self.interval == 'daily':
             self.dt = self.T / 255
-        
+        else:
+            self.dt = self.interval
+
         self.tau        = self.time_step * self.dt
         self.tau_arr    = (np.flip(np.arange(0, self.time_step+1)) * self.dt).reshape(-1,1)
 
