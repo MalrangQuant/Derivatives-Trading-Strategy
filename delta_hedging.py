@@ -74,7 +74,6 @@ class delta_hedging:
         '''calculate path's changes'''
 
         return np.vstack([path_1[0], path_1[1:] - path_1[:-1]])
-        
 
     def path_delta_shares(self, stock_path=None):
         '''input stock path (stock price path)'''
@@ -87,7 +86,7 @@ class delta_hedging:
         
         return path * self.num_shares
 
-    def path_delta_shares_cost (self, stock_path=None):
+    def path_delta_shares_cost (self, stock_path=None, tr=0):
         '''input stock path (stock price path)'''
 
         if stock_path is not None:
@@ -96,16 +95,19 @@ class delta_hedging:
             stock_path = self.stock_path()
             path = self.path_delta_shares(stock_path)
 
-        return path * stock_path
+        cost = path * stock_path
+        cost = np.where(cost>0, cost*(1+tr), cost)
 
-    def path_delta_hedged_cum (self, stock_path=None):
+        return cost
+
+    def path_delta_hedged_cum (self, stock_path=None, tr=0):
 
         if stock_path is not None:
-            path = self.path_delta_shares_cost(stock_path)
+            path = self.path_delta_shares_cost(stock_path, tr)
 
         else:
             stock_path = self.stock_path()
-            path = self.path_delta_shares_cost(stock_path)
+            path = self.path_delta_shares_cost(stock_path, tr)
 
         path_cost_ch = self.path_changes(path)
 
@@ -118,17 +120,17 @@ class delta_hedging:
 
         return delta_path_cumcost
 
-    def delta_hedging_int_cost (self, stock_path=None):
+    def delta_hedging_int_cost (self, stock_path=None, tr=0):
 
         if stock_path is not None:
-            path = self.path_delta_hedged_cum(stock_path)
+            path = self.path_delta_hedged_cum(stock_path, tr)
         else:
             stock_path = self.stock_path()
-            path = self.path_delta_hedged_cum(stock_path)
+            path = self.path_delta_hedged_cum(stock_path, tr)
 
         return path * (self.dt * self.rf)
 
-    def hedging_cost(self, stock_path=None):
+    def hedging_cost(self, stock_path=None, tr=0):
 
         if stock_path is not None:
             delta = self.path_delta(stock_path)
@@ -138,7 +140,10 @@ class delta_hedging:
 
         path_arr = np.vstack([delta[0], (delta[1:] - delta[:-1])])
         
-        hedge_arr = ((path_arr * stock_path) * np.exp(self.rf * self.tau_arr)).cumsum(axis=0)[-1]
+        arr = (path_arr * stock_path)
+        arr = np.where(arr>0, arr*(1+tr), arr)
+
+        hedge_arr = ( arr * np.exp(self.rf * self.tau_arr)).cumsum(axis=0)[-1]
         hedge_arr = np.where(hedge_arr > self.k, hedge_arr - self.k, hedge_arr)
 
         return hedge_arr
