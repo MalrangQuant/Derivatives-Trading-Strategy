@@ -38,7 +38,7 @@ class delta_hedging:
         '''PutCall for 'c', 'p' '''
         d1 = (np.log(self.s0/self.k) +((self.rf - self.q +0.5*np.power(self.sigma, 2))*self.tau))/(self.sigma*np.sqrt(self.tau))
         d2 = d1 - self.sigma*np.sqrt(self.tau)
-        value = self.s0*norm.cdf(d1) - self.k*np.exp(-self.rf*self.tau)*norm.cdf(d2)
+        value = self.s0 * np.exp(-self.q * self.tau) * norm.cdf(d1) - self.k*np.exp(-self.rf*self.tau)*norm.cdf(d2)
         return value
 
     def stock_path(self):
